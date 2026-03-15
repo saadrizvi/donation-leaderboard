@@ -57,6 +57,14 @@ export function setIframe(sessionId, { iframeUrl, iframeMode }) {
   });
 }
 
+export function setTheme(sessionId, theme) {
+  return request(`/sessions/${sessionId}/theme`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ theme }),
+  });
+}
+
 export async function exportCSV(sessionId) {
   const res = await fetch(`${BASE}/sessions/${sessionId}/export`);
   if (!res.ok) throw new Error(`HTTP ${res.status}`);

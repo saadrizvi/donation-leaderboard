@@ -14,8 +14,10 @@ function IframeEmbed({ url, mode, className }) {
           src={url}
           allow="autoplay; fullscreen"
           sandbox="allow-scripts allow-same-origin allow-popups allow-forms allow-presentation"
+          allowTransparency={true}
           onError={() => setFailed(true)}
           title="Embedded content"
+          style={{ background: 'transparent' }}
         />
       )}
     </div>

@@ -45,9 +45,10 @@ function Summary() {
   }
 
   return (
-    <div className="summary-page">
+    <div className="summary-page" data-theme={session.theme || 'dark'}>
       <div className="summary-header">
-        <h1>Thank You! 🎉</h1>
+        <h1>JazakAllahu Khayran 🤲</h1>
+        <div className="summary-subtitle">May Allah accept your generous contributions</div>
         <div className="summary-session-id">Session {sessionId}</div>
       </div>
 
@@ -55,10 +56,9 @@ function Summary() {
         Print / Save as PDF
       </button>
 
-      {/* Top donors */}
       {top5.length > 0 && (
         <div style={{ marginBottom: 'var(--spacing-lg)' }}>
-          <div className="summary-section-title">Top Donors</div>
+          <div className="summary-section-title">Top Contributors</div>
           <div className="top-donors">
             {top5.map((donor, i) => {
               const rank = i + 1
@@ -74,21 +74,20 @@ function Summary() {
         </div>
       )}
 
-      {/* Totals */}
       <div className="summary-section-title">Final Totals</div>
       <div className="summary-totals">
         <div className="summary-total-stat">
           <span className="summary-total-value">{session.donors.length}</span>
-          <span className="summary-total-label">Donors</span>
+          <span className="summary-total-label">Contributors</span>
         </div>
         <div className="summary-total-stat">
           <span className="summary-total-value">{fmt(total)}</span>
-          <span className="summary-total-label">Raised</span>
+          <span className="summary-total-label">Collected</span>
         </div>
         {session.goal && (
           <div className="summary-total-stat">
             <span className="summary-total-value">{fmt(session.goal)}</span>
-            <span className="summary-total-label">Goal</span>
+            <span className="summary-total-label">Target</span>
           </div>
         )}
       </div>

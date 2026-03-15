@@ -1,14 +1,37 @@
-:root {
-  --color-bg: #0f0f1a;
-  --color-surface: #1a1a2e;
-  --color-accent: #e94560;
-  --color-text: #ffffff;
-  --color-text-muted: #aaaacc;
-  --color-success: #00c896;
-  --color-warning: #f5a623;
+/* ─── Dark theme (default) — deep navy + gold ─── */
+:root,
+[data-theme="dark"] {
+  --color-bg: #0d1b2a;
+  --color-surface: #162636;
+  --color-surface-2: #1e3448;
+  --color-accent: #c9a84c;
+  --color-accent-hover: #e0be6a;
+  --color-accent-secondary: #2d8a5e;
+  --color-text: #f0ede6;
+  --color-text-muted: #8899aa;
+  --color-success: #2d8a5e;
+  --color-warning: #e0a030;
+  --color-danger: #c0392b;
+  --color-border: rgba(255,255,255,0.08);
   --font-display: 'Segoe UI', system-ui, sans-serif;
   --radius: 12px;
   --spacing-sm: 8px;
   --spacing-md: 16px;
   --spacing-lg: 32px;
+}
+
+/* ─── Light theme — warm cream + deep green ─── */
+[data-theme="light"] {
+  --color-bg: #f5f0e6;
+  --color-surface: #ffffff;
+  --color-surface-2: #ede8dc;
+  --color-accent: #1b5e38;
+  --color-accent-hover: #2d8a5e;
+  --color-accent-secondary: #c9a84c;
+  --color-text: #1a1a2e;
+  --color-text-muted: #5a6470;
+  --color-success: #1b5e38;
+  --color-warning: #b07a10;
+  --color-danger: #c0392b;
+  --color-border: rgba(0,0,0,0.10);
 }

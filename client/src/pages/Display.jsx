@@ -44,13 +44,13 @@ function Display() {
   }
 
   if (error && !session) {
-    // Stale session ID — clear it and drop back to entry screen
     localStorage.removeItem(LS_KEY)
     return <SessionEntry joinOnly onSessionSet={handleSessionSet} />
   }
 
   if (!session) return null
 
+  const theme = session.theme || 'dark'
   const isSplit = session.iframeMode === 'split' && session.iframeUrl
   const isRotate = session.iframeMode === 'rotate' && session.iframeUrl
 
@@ -59,7 +59,7 @@ function Display() {
   ) : null
 
   return (
-    <div className="display-page">
+    <div className="display-page" data-theme={theme}>
       <div className={`display-body${isSplit ? ' split' : ''}`}>
         <div className="donor-grid-container">
           <DonorGrid
@@ -73,7 +73,6 @@ function Display() {
 
       <TotalsBar session={session} />
 
-      {/* Settings cog */}
       <button
         className="display-settings-btn"
         onClick={() => setSettingsOpen(o => !o)}

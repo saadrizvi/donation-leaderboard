@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { usePolling } from '../hooks/usePolling.js'
-import { addDonor, editDonor, deleteDonor, setGoal, setIframe, exportCSV, importCSV } from '../api.js'
+import { addDonor, editDonor, deleteDonor, setGoal, setIframe, setTheme, exportCSV, importCSV } from '../api.js'
 import SessionEntry from '../components/SessionEntry.jsx'
 import DonorForm from '../components/DonorForm.jsx'
 import DonorList from '../components/DonorList.jsx'
@@ -128,6 +128,12 @@ function Admin() {
     }
   }
 
+  // --- Theme ---
+  async function handleSetTheme(value) {
+    await setTheme(sessionId, value)
+    await refresh()
+  }
+
   // --- Iframe ---
   async function handleSaveIframe() {
     try {
@@ -223,11 +229,11 @@ function Admin() {
       <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
         <div style={{ flex: 1, background: '#f5f5fa', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
           <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#1a1a2e' }}>{session.donors.length}</div>
-          <div style={{ fontSize: '0.8rem', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>Donors</div>
+          <div style={{ fontSize: '0.8rem', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>Contributors</div>
         </div>
         <div style={{ flex: 1, background: '#f5f5fa', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
           <div style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--color-accent)' }}>{formatAmount(total)}</div>
-          <div style={{ fontSize: '0.8rem', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>Raised</div>
+          <div style={{ fontSize: '0.8rem', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>Collected</div>
         </div>
         {session.goal && (
           <div style={{ flex: 1, background: '#f5f5fa', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
@@ -264,7 +270,7 @@ function Admin() {
 
       {/* Goal */}
       <div className="admin-section">
-        <h2>Fundraising Goal</h2>
+        <h2>Fundraising Target</h2>
         {session.goal && (
           <div className="goal-display">
             <span>Current goal:</span>
@@ -292,6 +298,29 @@ function Admin() {
           </button>
         </div>
         {goalMsg && <p className="form-error">{goalMsg}</p>}
+      </div>
+
+      {/* Display theme */}
+      <div className="admin-section">
+        <h2>Display Theme</h2>
+        <div className="mode-options">
+          <div
+            className={`mode-option${(session.theme || 'dark') === 'dark' ? ' selected' : ''}`}
+            onClick={() => handleSetTheme('dark')}
+            style={{ background: '#0d1b2a', color: '#f0ede6', borderColor: (session.theme || 'dark') === 'dark' ? '#c9a84c' : '#333' }}
+          >
+            <strong>🌙 Dark</strong>
+            <div style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: '2px' }}>Navy + Gold</div>
+          </div>
+          <div
+            className={`mode-option${session.theme === 'light' ? ' selected' : ''}`}
+            onClick={() => handleSetTheme('light')}
+            style={{ background: '#f5f0e6', color: '#1a1a2e', borderColor: session.theme === 'light' ? '#1b5e38' : '#ccc' }}
+          >
+            <strong>☀️ Light</strong>
+            <div style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: '2px' }}>Cream + Green</div>
+          </div>
+        </div>
       </div>
 
       {/* Iframe config */}

@@ -3,9 +3,16 @@
   margin: 0 auto;
   padding: var(--spacing-lg);
   font-family: var(--font-display);
-  color: #1a1a2e;
-  background: #fff;
   min-height: 100svh;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+/* Light theme overrides for summary */
+[data-theme="light"].summary-page,
+[data-theme="light"] .summary-page {
+  background: #f5f0e6;
+  color: #1a1a2e;
 }
 
 .summary-header {
@@ -14,29 +21,37 @@
 }
 
 .summary-header h1 {
-  font-size: 2.4rem;
+  font-size: 2.2rem;
   font-weight: 800;
-  margin: 0 0 8px;
-  color: #1a1a2e;
+  margin: 0 0 6px;
+  color: var(--color-accent);
+}
+
+.summary-subtitle {
+  font-size: 1rem;
+  color: var(--color-text-muted);
+  margin-bottom: 8px;
+  font-style: italic;
 }
 
 .summary-session-id {
-  font-size: 0.9rem;
-  color: #888;
+  font-size: 0.85rem;
+  color: var(--color-text-muted);
   letter-spacing: 2px;
   text-transform: uppercase;
 }
 
-/* Top donors */
+/* Section title */
 .summary-section-title {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 1.5px;
-  color: #888;
+  color: var(--color-text-muted);
   margin: 0 0 var(--spacing-md);
 }
 
+/* Top donors */
 .top-donors {
   display: flex;
   flex-direction: column;
@@ -50,25 +65,22 @@
   gap: var(--spacing-md);
   padding: var(--spacing-md);
   border-radius: var(--radius);
-  border: 2px solid #eee;
-  background: #fafafa;
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
 }
 
-/* Top 3 */
 .top-donor-card.rank-1 {
-  border-color: #f5c518;
-  background: #fffbea;
+  border-color: #c9a84c;
+  background: var(--color-surface);
   padding: var(--spacing-lg) var(--spacing-md);
 }
 
 .top-donor-card.rank-2 {
-  border-color: #c0c0c0;
-  background: #f9f9f9;
+  border-color: #a0a8b0;
 }
 
 .top-donor-card.rank-3 {
-  border-color: #cd7f32;
-  background: #fdf6ee;
+  border-color: #9c6a3a;
 }
 
 .top-donor-rank {
@@ -84,7 +96,7 @@
   flex: 1;
   font-weight: 700;
   font-size: 1.1rem;
-  color: #1a1a2e;
+  color: var(--color-text);
 }
 
 .top-donor-card.rank-1 .top-donor-name { font-size: 1.4rem; }
@@ -99,7 +111,8 @@
 
 /* Totals */
 .summary-totals {
-  background: #f5f5fa;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
   border-radius: var(--radius);
   padding: var(--spacing-lg);
   margin-bottom: var(--spacing-lg);
@@ -117,32 +130,15 @@
 .summary-total-value {
   font-size: 2rem;
   font-weight: 800;
-  color: #1a1a2e;
+  color: var(--color-accent);
   display: block;
 }
 
 .summary-total-label {
   font-size: 0.8rem;
-  color: #888;
+  color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 1px;
-}
-
-/* Goal progress — light theme override */
-.summary-page .goal-progress-track {
-  background: #e5e5ef;
-}
-
-.summary-page .goal-progress-fill {
-  background: var(--color-accent);
-}
-
-.summary-page .goal-tick {
-  background: rgba(0,0,0,0.2);
-}
-
-.summary-page .goal-progress-labels {
-  color: #888;
 }
 
 .summary-goal-section {
@@ -165,20 +161,9 @@
 
 .print-btn:hover { opacity: 0.85; }
 
-/* Print styles */
 @media print {
   .print-btn { display: none; }
-
-  .summary-page {
-    padding: 16px;
-    max-width: 100%;
-  }
-
-  .top-donor-card {
-    break-inside: avoid;
-  }
-
-  .summary-totals {
-    break-inside: avoid;
-  }
+  .summary-page { padding: 16px; max-width: 100%; }
+  .top-donor-card { break-inside: avoid; }
+  .summary-totals { break-inside: avoid; }
 }

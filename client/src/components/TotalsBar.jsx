@@ -12,12 +12,12 @@ function TotalsBar({ session }) {
     <div className="totals-bar">
       <div className="totals-stat">
         <span className="totals-stat-value">{count}</span>
-        <span className="totals-stat-label">Donors</span>
+        <span className="totals-stat-label">Contributors</span>
       </div>
       <div className="totals-divider" />
       <div className="totals-stat">
         <span className="totals-stat-value">{totalFmt}</span>
-        <span className="totals-stat-label">Raised</span>
+        <span className="totals-stat-label">Collected</span>
       </div>
       {session.goal && (
         <>

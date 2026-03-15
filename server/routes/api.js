@@ -59,6 +59,7 @@ router.post('/sessions', (req, res) => {
     goal: null,
     iframeUrl: null,
     iframeMode: null,
+    theme: 'dark',
     createdAt: new Date().toISOString(),
     donors: [],
   };
@@ -184,6 +185,21 @@ router.put('/sessions/:id/iframe', (req, res) => {
     session.iframeMode = iframeMode;
   }
 
+  res.json(session);
+});
+
+// --- Theme ---
+
+router.put('/sessions/:id/theme', (req, res) => {
+  const session = sessions.get(req.params.id.toUpperCase());
+  if (!session) return res.status(404).json({ error: 'Session not found.' });
+
+  const { theme } = req.body;
+  if (theme !== 'light' && theme !== 'dark') {
+    return res.status(400).json({ error: 'theme must be "light" or "dark".' });
+  }
+
+  session.theme = theme;
   res.json(session);
 });
 
