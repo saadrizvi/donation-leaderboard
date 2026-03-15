@@ -5,7 +5,7 @@
       "Bash(npm create:*)",
       "Bash(npm install:*)",
       "Bash(netstat -ano)",
-      "Bash(taskkill /PID 34048 /F)"
+      "Bash(npm run:*)"
     ]
   }
 }

@@ -1,0 +1,184 @@
+.summary-page {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: var(--spacing-lg);
+  font-family: var(--font-display);
+  color: #1a1a2e;
+  background: #fff;
+  min-height: 100svh;
+}
+
+.summary-header {
+  text-align: center;
+  margin-bottom: var(--spacing-lg);
+}
+
+.summary-header h1 {
+  font-size: 2.4rem;
+  font-weight: 800;
+  margin: 0 0 8px;
+  color: #1a1a2e;
+}
+
+.summary-session-id {
+  font-size: 0.9rem;
+  color: #888;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+
+/* Top donors */
+.summary-section-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: #888;
+  margin: 0 0 var(--spacing-md);
+}
+
+.top-donors {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: var(--spacing-lg);
+}
+
+.top-donor-card {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  border-radius: var(--radius);
+  border: 2px solid #eee;
+  background: #fafafa;
+}
+
+/* Top 3 */
+.top-donor-card.rank-1 {
+  border-color: #f5c518;
+  background: #fffbea;
+  padding: var(--spacing-lg) var(--spacing-md);
+}
+
+.top-donor-card.rank-2 {
+  border-color: #c0c0c0;
+  background: #f9f9f9;
+}
+
+.top-donor-card.rank-3 {
+  border-color: #cd7f32;
+  background: #fdf6ee;
+}
+
+.top-donor-rank {
+  font-size: 1.8rem;
+  min-width: 48px;
+  text-align: center;
+  line-height: 1;
+}
+
+.top-donor-card.rank-1 .top-donor-rank { font-size: 2.4rem; }
+
+.top-donor-name {
+  flex: 1;
+  font-weight: 700;
+  font-size: 1.1rem;
+  color: #1a1a2e;
+}
+
+.top-donor-card.rank-1 .top-donor-name { font-size: 1.4rem; }
+
+.top-donor-amount {
+  font-weight: 800;
+  font-size: 1.2rem;
+  color: var(--color-accent);
+}
+
+.top-donor-card.rank-1 .top-donor-amount { font-size: 1.6rem; }
+
+/* Totals */
+.summary-totals {
+  background: #f5f5fa;
+  border-radius: var(--radius);
+  padding: var(--spacing-lg);
+  margin-bottom: var(--spacing-lg);
+  display: flex;
+  gap: var(--spacing-lg);
+  flex-wrap: wrap;
+}
+
+.summary-total-stat {
+  flex: 1;
+  min-width: 120px;
+  text-align: center;
+}
+
+.summary-total-value {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  display: block;
+}
+
+.summary-total-label {
+  font-size: 0.8rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Goal progress — light theme override */
+.summary-page .goal-progress-track {
+  background: #e5e5ef;
+}
+
+.summary-page .goal-progress-fill {
+  background: var(--color-accent);
+}
+
+.summary-page .goal-tick {
+  background: rgba(0,0,0,0.2);
+}
+
+.summary-page .goal-progress-labels {
+  color: #888;
+}
+
+.summary-goal-section {
+  margin-bottom: var(--spacing-lg);
+}
+
+/* Print button */
+.print-btn {
+  display: block;
+  margin: 0 auto var(--spacing-lg);
+  padding: 12px 32px;
+  background: var(--color-accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.print-btn:hover { opacity: 0.85; }
+
+/* Print styles */
+@media print {
+  .print-btn { display: none; }
+
+  .summary-page {
+    padding: 16px;
+    max-width: 100%;
+  }
+
+  .top-donor-card {
+    break-inside: avoid;
+  }
+
+  .summary-totals {
+    break-inside: avoid;
+  }
+}
