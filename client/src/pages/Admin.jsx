@@ -5,7 +5,7 @@ import SessionEntry from '../components/SessionEntry.jsx'
 import DonorForm from '../components/DonorForm.jsx'
 import DonorList from '../components/DonorList.jsx'
 import DuplicateModal from '../components/DuplicateModal.jsx'
-import '../styles/global.css'
+import StatusIndicator from '../components/StatusIndicator.jsx'
 import '../styles/admin.css'
 
 const LS_KEY = 'donor_board_admin_session'
@@ -16,7 +16,7 @@ function formatAmount(amount) {
 
 function Admin() {
   const [sessionId, setSessionId] = useState(() => localStorage.getItem(LS_KEY) || null)
-  const { session, loading, error, refresh } = usePolling(sessionId)
+  const { session, loading, error, consecutiveFailures, refresh } = usePolling(sessionId)
 
   // Edit state
   const [editingDonor, setEditingDonor] = useState(null)
@@ -382,6 +382,8 @@ function Admin() {
           onCancel={handleDuplicateCancel}
         />
       )}
+
+      <StatusIndicator consecutiveFailures={consecutiveFailures} error={error} />
     </div>
   )
 }

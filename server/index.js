@@ -13,7 +13,8 @@ app.use('/api', apiRouter);
 
 const distPath = path.join(__dirname, '../client/dist');
 app.use(express.static(distPath));
-app.get('*', (req, res) => {
+app.get('*', (req, res, next) => {
+  if (req.path.startsWith('/api/')) return next();
   res.sendFile(path.join(distPath, 'index.html'));
 });
 

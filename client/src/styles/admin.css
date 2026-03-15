@@ -363,3 +363,20 @@
   background: rgba(220, 53, 69, 0.1);
   color: #dc3545;
 }
+
+/* Status indicator override for light admin bg */
+.admin-page .status-indicator {
+  position: fixed;
+  bottom: var(--spacing-md);
+  left: var(--spacing-md);
+  z-index: 50;
+}
+
+.admin-page .status-dot.green  { background: #00c896; }
+.admin-page .status-dot.yellow { background: #f5a623; }
+.admin-page .status-dot.red    { background: #dc3545; }
+
+.admin-page .status-indicator span {
+  color: #666;
+  font-size: 0.75rem;
+}

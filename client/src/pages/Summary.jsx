@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { getSession } from '../api.js'
 import GoalProgress from '../components/GoalProgress.jsx'
-import '../styles/global.css'
 import '../styles/display.css'
 import '../styles/summary.css'
 

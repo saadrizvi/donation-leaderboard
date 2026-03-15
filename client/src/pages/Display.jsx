@@ -6,7 +6,6 @@ import DonorGrid from '../components/DonorGrid.jsx'
 import TotalsBar from '../components/TotalsBar.jsx'
 import IframeEmbed from '../components/IframeEmbed.jsx'
 import StatusIndicator from '../components/StatusIndicator.jsx'
-import '../styles/global.css'
 import '../styles/display.css'
 
 const LS_KEY = 'donor_board_kiosk_session'
