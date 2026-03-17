@@ -9,16 +9,31 @@ async function request(path, options = {}) {
   return res.json();
 }
 
-export function createSession(customId) {
+export function createSession(customId, pin) {
+  const body = {};
+  if (customId) body.id = customId;
+  if (pin) body.pin = pin;
   return request('/sessions', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(customId ? { id: customId } : {}),
+    body: JSON.stringify(body),
   });
 }
 
 export function getSession(id) {
   return request(`/sessions/${id}`);
+}
+
+export function verifyPin(sessionId, pin) {
+  return request(`/sessions/${sessionId}/verify-pin`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pin }),
+  });
+}
+
+export function undoAction(sessionId) {
+  return request(`/sessions/${sessionId}/undo`, { method: 'POST' });
 }
 
 export function addDonor(sessionId, { firstName, lastName, amount, isAnonymous }) {
@@ -94,6 +109,22 @@ export function setTheme(sessionId, theme) {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ theme }),
+  });
+}
+
+export function setMilestones(sessionId, milestonesEnabled) {
+  return request(`/sessions/${sessionId}/milestones`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ milestonesEnabled }),
+  });
+}
+
+export function setQr(sessionId, { qrUrl, qrEnabled }) {
+  return request(`/sessions/${sessionId}/qr`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ qrUrl, qrEnabled }),
   });
 }
 

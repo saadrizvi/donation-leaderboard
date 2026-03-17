@@ -4,6 +4,7 @@ import {
   addDonor, editDonor, deleteDonor,
   setGoal, setIframe, setTheme, exportCSV, importCSV,
   setTitle, setDisplayMode, setTicker, setSummaryMessages,
+  verifyPin, undoAction, setMilestones, setQr,
 } from '../api.js'
 import SessionEntry from '../components/SessionEntry.jsx'
 import DonorForm from '../components/DonorForm.jsx'
@@ -34,6 +35,19 @@ function formatAmount(amount) {
 function Admin() {
   const [sessionId, setSessionId] = useState(() => localStorage.getItem(LS_KEY) || null)
   const { session, loading, error, consecutiveFailures, refresh } = usePolling(sessionId)
+
+  // PIN verification
+  const [pinVerified, setPinVerified] = useState(false)
+  const [adminPin, setAdminPin] = useState('')
+  const [adminPinError, setAdminPinError] = useState('')
+
+  useEffect(() => {
+    if (sessionId) {
+      setPinVerified(!!sessionStorage.getItem('pin_ok_' + sessionId))
+    } else {
+      setPinVerified(false)
+    }
+  }, [sessionId])
 
   // Edit state
   const [editingDonor, setEditingDonor] = useState(null)
@@ -66,6 +80,11 @@ function Admin() {
   const [tickerInput, setTickerInput] = useState('')
   const [tickerMsg, setTickerMsg] = useState('')
 
+  // QR
+  const [qrUrlInput, setQrUrlInput] = useState('')
+  const [qrEnabledInput, setQrEnabledInput] = useState(false)
+  const [qrMsg, setQrMsg] = useState('')
+
   // CSV
   const [csvFile, setCsvFile] = useState(null)
   const [csvMsg, setCsvMsg] = useState(null)
@@ -84,6 +103,8 @@ function Admin() {
       setThankYouInput(session.thankYouMessage || 'Thank you for your generosity!')
       setTargetReachedInput(session.targetReachedMessage || 'Target Reached! Alhumdulillah, {over} over target')
       setTargetRemainingInput(session.targetRemainingMessage || '{remaining} left to reach target')
+      setQrUrlInput(session.qrUrl || '')
+      setQrEnabledInput(session.qrEnabled || false)
     }
   }, [session?.id])
 
@@ -105,6 +126,26 @@ function Admin() {
     setCollapsedSections(prev => ({ ...prev, [name]: !prev[name] }))
   }
 
+  // --- PIN Verification ---
+  async function handleVerifyPin(e) {
+    e.preventDefault()
+    setAdminPinError('')
+    try {
+      await verifyPin(sessionId, adminPin)
+      sessionStorage.setItem('pin_ok_' + sessionId, '1')
+      setPinVerified(true)
+    } catch {
+      setAdminPinError('Incorrect PIN. Try again.')
+      setAdminPin('')
+    }
+  }
+
+  // --- Undo ---
+  async function handleUndo() {
+    await undoAction(sessionId)
+    await refresh()
+  }
+
   // --- Donor add with duplicate detection ---
   function findDuplicate(data, donors) {
     if (data.isAnonymous || (!data.firstName && !data.lastName)) return null
@@ -117,7 +158,7 @@ function Admin() {
   }
 
   async function handleAddDonor(data) {
-    if (data === null) return // cancel from edit mode noop
+    if (data === null) return
 
     const duplicate = findDuplicate(data, session.donors)
     if (duplicate) {
@@ -189,9 +230,15 @@ function Admin() {
     try {
       await setDisplayMode(sessionId, mode)
       await refresh()
-    } catch (err) {
+    } catch {
       // silently ignore
     }
+  }
+
+  // --- Milestones ---
+  async function handleSetMilestones(enabled) {
+    await setMilestones(sessionId, enabled)
+    await refresh()
   }
 
   // --- Theme ---
@@ -264,6 +311,17 @@ function Admin() {
     }
   }
 
+  // --- QR ---
+  async function handleSaveQr() {
+    try {
+      await setQr(sessionId, { qrUrl: qrUrlInput || null, qrEnabled: qrEnabledInput })
+      setQrMsg('Saved.')
+      await refresh()
+    } catch (err) {
+      setQrMsg(err.message)
+    }
+  }
+
   // --- CSV ---
   async function handleExport() {
     try {
@@ -312,6 +370,41 @@ function Admin() {
 
   if (!session) return null
 
+  // PIN verification overlay (for sessions with a PIN that haven't been verified this tab)
+  if (session.hasPIN && !pinVerified) {
+    return (
+      <div className="modal-backdrop">
+        <div className="modal-card">
+          <h2>🔒 Admin PIN Required</h2>
+          <p>This session is PIN-protected. Enter the PIN to access the admin panel.</p>
+          <form onSubmit={handleVerifyPin}>
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>PIN</label>
+              <input
+                type="password"
+                inputMode="numeric"
+                maxLength={4}
+                placeholder="4-digit PIN"
+                value={adminPin}
+                onChange={e => setAdminPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                autoFocus
+              />
+            </div>
+            {adminPinError && <p className="form-error">{adminPinError}</p>}
+            <div className="modal-actions">
+              <button className="btn btn-ghost" type="button" onClick={handleLeaveSession}>
+                Leave
+              </button>
+              <button className="btn btn-primary" type="submit" disabled={adminPin.length !== 4}>
+                Unlock
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    )
+  }
+
   const total = session.donors.reduce((sum, d) => sum + d.amount, 0)
 
   return (
@@ -329,36 +422,44 @@ function Admin() {
         >
           Open Display ↗
         </a>
+        <button
+          className="btn btn-ghost btn-sm"
+          onClick={handleUndo}
+          disabled={!session.canUndo}
+          title="Undo last donor change"
+        >
+          ↩ Undo
+        </button>
         <button className="btn btn-ghost btn-sm" onClick={handleLeaveSession}>Leave</button>
       </div>
 
       {/* Stats */}
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
-        <div style={{ flex: 1, background: '#f5f5fa', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
-          <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#1a1a2e' }}>{session.donors.length}</div>
-          <div style={{ fontSize: '0.8rem', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>Contributors</div>
+      <div className="admin-stats">
+        <div className="admin-stat-box">
+          <div className="admin-stat-value">{session.donors.length}</div>
+          <div className="admin-stat-label">Contributors</div>
         </div>
-        <div style={{ flex: 1, background: '#f5f5fa', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
-          <div style={{ fontSize: '1.6rem', fontWeight: 700, color: 'var(--color-accent)' }}>{formatAmount(total)}</div>
-          <div style={{ fontSize: '0.8rem', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>Collected</div>
+        <div className="admin-stat-box">
+          <div className="admin-stat-value" style={{ color: 'var(--color-accent)' }}>{formatAmount(total)}</div>
+          <div className="admin-stat-label">Collected</div>
         </div>
         {session.goal && (
-          <div style={{ flex: 1, background: '#f5f5fa', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
-            <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#1a1a2e' }}>{formatAmount(session.goal)}</div>
-            <div style={{ fontSize: '0.8rem', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>Goal</div>
+          <div className="admin-stat-box">
+            <div className="admin-stat-value">{formatAmount(session.goal)}</div>
+            <div className="admin-stat-label">Goal</div>
           </div>
         )}
         {session.goal && (
-          <div style={{ flex: 1, background: total >= session.goal ? '#edf7f0' : '#fff7ed', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
+          <div className="admin-stat-box" style={{ background: total >= session.goal ? '#edf7f0' : '#fff7ed' }}>
             {total >= session.goal ? (
               <>
-                <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#1b5e38' }}>Goal Met! ✓</div>
-                <div style={{ fontSize: '0.8rem', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>{formatAmount(total - session.goal)} over</div>
+                <div className="admin-stat-value" style={{ fontSize: '1.1rem', color: '#1b5e38' }}>Goal Met! ✓</div>
+                <div className="admin-stat-label">{formatAmount(total - session.goal)} over</div>
               </>
             ) : (
               <>
-                <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#b07a10' }}>{formatAmount(session.goal - total)}</div>
-                <div style={{ fontSize: '0.8rem', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>Remaining</div>
+                <div className="admin-stat-value" style={{ color: '#b07a10' }}>{formatAmount(session.goal - total)}</div>
+                <div className="admin-stat-label">Remaining</div>
               </>
             )}
           </div>
@@ -382,6 +483,15 @@ function Admin() {
           </button>
         </div>
         <p className="helper-text">Controls what the Display screen shows to donors.</p>
+        <div className="toggle-row" style={{ marginTop: '0.75rem' }}>
+          <input
+            type="checkbox"
+            id="milestones-toggle"
+            checked={session.milestonesEnabled !== false}
+            onChange={e => handleSetMilestones(e.target.checked)}
+          />
+          <label htmlFor="milestones-toggle">Show milestone celebrations on display (25%, 50%, 75%, 100%, and donor count milestones)</label>
+        </div>
       </Section>
 
       {/* Add / Edit donor */}
@@ -548,6 +658,32 @@ function Admin() {
           )}
         </div>
         {tickerMsg && <p className="form-msg">{tickerMsg}</p>}
+      </Section>
+
+      {/* QR Code */}
+      <Section collapsedSections={collapsedSections} toggleSection={toggleSection} name="qr" title="QR Code on Display">
+        <div className="form-group" style={{ marginBottom: '10px' }}>
+          <label>URL to encode</label>
+          <input
+            className="input"
+            type="url"
+            placeholder="https://example.com"
+            value={qrUrlInput}
+            onChange={e => setQrUrlInput(e.target.value)}
+          />
+        </div>
+        <div className="toggle-row" style={{ marginBottom: '10px' }}>
+          <input
+            type="checkbox"
+            id="qr-enabled"
+            checked={qrEnabledInput}
+            onChange={e => setQrEnabledInput(e.target.checked)}
+            disabled={!qrUrlInput}
+          />
+          <label htmlFor="qr-enabled">Show QR code in corner of display screen</label>
+        </div>
+        <button className="btn btn-primary btn-sm" onClick={handleSaveQr}>Save QR</button>
+        {qrMsg && <p className="form-msg" style={{ marginTop: '6px' }}>{qrMsg}</p>}
       </Section>
 
       {/* Iframe config */}

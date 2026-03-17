@@ -487,3 +487,141 @@
   color: #888;
   margin-top: 4px;
 }
+
+/* Admin stats row */
+.admin-stats {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+
+.admin-stat-box {
+  flex: 1;
+  min-width: 80px;
+  background: #f5f5fa;
+  border-radius: 8px;
+  padding: 12px;
+  text-align: center;
+}
+
+.admin-stat-value {
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  line-height: 1.1;
+}
+
+.admin-stat-label {
+  font-size: 0.75rem;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-top: 2px;
+}
+
+/* ─── Mobile responsive (≤ 600px) ─── */
+
+@media (max-width: 600px) {
+  .admin-page {
+    padding: 8px;
+  }
+
+  .session-header {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .session-id-display {
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+  }
+
+  /* Make all small buttons full tap-target size on mobile */
+  .btn-sm {
+    min-height: 44px;
+    padding: 10px 12px;
+    font-size: 0.85rem;
+  }
+
+  /* Donor list — bigger edit/delete targets */
+  .donor-row {
+    padding: 10px 8px;
+    gap: 6px;
+  }
+
+  .donor-row-actions .btn {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 8px;
+  }
+
+  .donor-row-name {
+    font-size: 0.9rem;
+  }
+
+  .donor-row-amount {
+    min-width: 64px;
+    font-size: 0.95rem;
+  }
+
+  /* Form rows — single column */
+  .form-row {
+    flex-direction: column;
+  }
+
+  /* Stats — 2×2 grid on small screens */
+  .admin-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+
+  .admin-stat-value {
+    font-size: 1.3rem;
+  }
+
+  /* Mode options — stack vertically */
+  .mode-options {
+    flex-direction: column;
+  }
+
+  /* Display mode toggle — stack */
+  .display-mode-toggle {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  /* Section body padding */
+  .section-body {
+    padding: 10px;
+  }
+
+  /* CSV row */
+  .csv-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .csv-row .btn {
+    width: 100%;
+  }
+
+  /* Form actions */
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+  }
+
+  /* Btn row */
+  .btn-row {
+    flex-direction: column;
+  }
+
+  .btn-row .btn {
+    width: 100%;
+  }
+}

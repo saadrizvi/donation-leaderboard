@@ -3,6 +3,7 @@ import { createSession, getSession } from '../api.js'
 
 function SessionEntry({ onSessionSet, joinOnly = false }) {
   const [customId, setCustomId] = useState('')
+  const [createPin, setCreatePin] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -10,7 +11,7 @@ function SessionEntry({ onSessionSet, joinOnly = false }) {
     setError('')
     setLoading(true)
     try {
-      const session = await createSession()
+      const session = await createSession(undefined, createPin.trim() || undefined)
       onSessionSet(session.id)
     } catch (err) {
       setError(err.message)
@@ -66,11 +67,25 @@ function SessionEntry({ onSessionSet, joinOnly = false }) {
         {!joinOnly && (
           <>
             <div className="session-entry-divider">— or —</div>
+            <div className="form-group" style={{ marginBottom: '10px' }}>
+              <label htmlFor="create-pin-input" style={{ color: 'var(--color-text-muted)' }}>
+                Admin PIN (optional, 4 digits)
+              </label>
+              <input
+                id="create-pin-input"
+                type="password"
+                inputMode="numeric"
+                placeholder="Leave blank for no PIN"
+                value={createPin}
+                onChange={e => setCreatePin(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                maxLength={4}
+              />
+            </div>
             <button
               className="btn btn-secondary"
               style={{ width: '100%' }}
               onClick={handleCreate}
-              disabled={loading}
+              disabled={loading || (createPin.length > 0 && createPin.length < 4)}
             >
               Create New Session
             </button>

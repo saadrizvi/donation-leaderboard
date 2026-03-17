@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useSearchParams } from 'react-router-dom'
+import { QRCodeSVG } from 'qrcode.react'
 import { usePolling } from '../hooks/usePolling.js'
 import SessionEntry from '../components/SessionEntry.jsx'
 import DonorGrid from '../components/DonorGrid.jsx'
@@ -8,9 +9,14 @@ import IframeEmbed from '../components/IframeEmbed.jsx'
 import StatusIndicator from '../components/StatusIndicator.jsx'
 import TickerBar from '../components/TickerBar.jsx'
 import Thermometer from '../components/Thermometer.jsx'
+import MilestoneOverlay from '../components/MilestoneOverlay.jsx'
 import '../styles/display.css'
 
 const LS_KEY = 'donor_board_kiosk_session'
+
+// Milestones to watch for
+const GOAL_MILESTONES = [25, 50, 75, 100]
+const COUNT_MILESTONES = [10, 25, 50, 100]
 
 function Display() {
   const { sessionId: paramId } = useParams()
@@ -20,6 +26,54 @@ function Display() {
     return code ? code.toUpperCase() : (localStorage.getItem(LS_KEY) || null)
   })
   const { session, loading, error, consecutiveFailures } = usePolling(sessionId)
+
+  // Milestone tracking
+  const prevTotalRef = useRef(null)
+  const prevCountRef = useRef(null)
+  const shownMilestonesRef = useRef(new Set())
+  const [activeOverlay, setActiveOverlay] = useState(null)
+
+  useEffect(() => {
+    if (!session || session.milestonesEnabled === false) return
+
+    const total = session.donors.reduce((sum, d) => sum + d.amount, 0)
+    const count = session.donors.length
+
+    // Goal % milestones
+    if (session.goal && prevTotalRef.current !== null) {
+      const prevPct = (prevTotalRef.current / session.goal) * 100
+      const pct = (total / session.goal) * 100
+      let toShow = null
+      for (const m of GOAL_MILESTONES) {
+        if (prevPct < m && pct >= m && !shownMilestonesRef.current.has(`goal_${m}`)) {
+          shownMilestonesRef.current.add(`goal_${m}`)
+          toShow = m
+        }
+      }
+      if (toShow !== null) {
+        setActiveOverlay({ type: 'goal', milestone: toShow })
+        setTimeout(() => setActiveOverlay(null), 4000)
+      }
+    }
+
+    // Donor count milestones (only if no goal overlay is about to fire)
+    if (prevCountRef.current !== null) {
+      let toShow = null
+      for (const m of COUNT_MILESTONES) {
+        if (prevCountRef.current < m && count >= m && !shownMilestonesRef.current.has(`count_${m}`)) {
+          shownMilestonesRef.current.add(`count_${m}`)
+          toShow = m
+        }
+      }
+      if (toShow !== null) {
+        setActiveOverlay({ type: 'count', count: toShow })
+        setTimeout(() => setActiveOverlay(null), 4000)
+      }
+    }
+
+    prevTotalRef.current = total
+    prevCountRef.current = count
+  }, [session])
 
   function handleSessionSet(id) {
     localStorage.setItem(LS_KEY, id)
@@ -120,6 +174,17 @@ function Display() {
       {!isSummaryMode && <TotalsBar session={session} />}
 
       <TickerBar message={session.tickerMessage} />
+
+      {/* QR Code corner */}
+      {session.qrEnabled && session.qrUrl && (
+        <div className="qr-corner">
+          <QRCodeSVG value={session.qrUrl} size={96} />
+          <div className="qr-label">Scan to visit</div>
+        </div>
+      )}
+
+      {/* Milestone overlays */}
+      <MilestoneOverlay overlay={activeOverlay} />
 
       <StatusIndicator consecutiveFailures={consecutiveFailures} error={error} />
     </div>

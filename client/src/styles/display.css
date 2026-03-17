@@ -609,6 +609,102 @@
   border-right-color: rgba(201, 168, 76, 0.15);
 }
 
+/* ─── Milestone overlays ─── */
+
+.milestone-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.78);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: milestone-fade 0.5s ease;
+}
+
+@keyframes milestone-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.milestone-overlay-content {
+  text-align: center;
+  animation: milestone-pop 0.55s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes milestone-pop {
+  0%   { transform: scale(0.4); opacity: 0; }
+  100% { transform: scale(1);   opacity: 1; }
+}
+
+.milestone-overlay-title {
+  font-size: clamp(2.5rem, 8vw, 5rem);
+  font-weight: 900;
+  color: var(--color-accent);
+  text-shadow: 0 0 60px currentColor, 0 0 120px currentColor;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.milestone-overlay-sub {
+  font-size: clamp(1.2rem, 3vw, 2rem);
+  color: #fff;
+  margin-top: 1rem;
+  opacity: 0.9;
+  font-weight: 600;
+}
+
+/* Donor count banner — slides in from top */
+.milestone-banner {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background: var(--color-accent);
+  color: #fff;
+  text-align: center;
+  padding: 1rem 2rem;
+  z-index: 100;
+  animation: banner-slide-down 0.4s ease;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+}
+
+@keyframes banner-slide-down {
+  from { transform: translateY(-100%); }
+  to   { transform: translateY(0); }
+}
+
+.milestone-banner-text {
+  font-size: clamp(1.2rem, 3vw, 1.8rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+/* ─── QR Code corner ─── */
+
+.qr-corner {
+  position: fixed;
+  bottom: 80px;
+  right: 16px;
+  background: #fff;
+  padding: 8px;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+  z-index: 20;
+}
+
+.qr-label {
+  font-size: 0.6rem;
+  color: #333;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
 /* ─── Light theme display enhancements ─── */
 
 [data-theme="light"] .display-page {

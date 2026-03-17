@@ -29,6 +29,18 @@ function computeDisplayName(firstName, lastName, isAnonymous) {
   return first + (last ? ' ' + last[0].toUpperCase() + '.' : '');
 }
 
+// Strip internal fields before sending to clients
+function sanitizeSession(session) {
+  const { pin, actionStack, ...rest } = session;
+  return { ...rest, hasPIN: !!pin, canUndo: actionStack.length > 0 };
+}
+
+// Push snapshot for undo (max 10)
+function pushSnapshot(session) {
+  session.actionStack.push(JSON.parse(JSON.stringify(session.donors)));
+  if (session.actionStack.length > 10) session.actionStack.shift();
+}
+
 // --- Health ---
 
 router.get('/health', (req, res) => {
@@ -39,6 +51,7 @@ router.get('/health', (req, res) => {
 
 router.post('/sessions', (req, res) => {
   let id = req.body?.id;
+  const { pin } = req.body || {};
 
   if (id) {
     id = id.toUpperCase();
@@ -54,8 +67,19 @@ router.post('/sessions', (req, res) => {
     } while (sessions.has(id));
   }
 
+  let normalizedPin = null;
+  if (pin) {
+    const p = String(pin).trim();
+    if (!/^\d{4}$/.test(p)) {
+      return res.status(400).json({ error: 'PIN must be exactly 4 digits.' });
+    }
+    normalizedPin = p;
+  }
+
   const session = {
     id,
+    pin: normalizedPin,
+    actionStack: [],
     goal: null,
     iframeUrl: null,
     iframeMode: null,
@@ -67,18 +91,51 @@ router.post('/sessions', (req, res) => {
     thankYouMessage: null,
     targetReachedMessage: null,
     targetRemainingMessage: null,
+    milestonesEnabled: true,
+    qrUrl: null,
+    qrEnabled: false,
     createdAt: new Date().toISOString(),
     donors: [],
   };
 
   sessions.set(id, session);
-  return res.status(201).json(session);
+  return res.status(201).json(sanitizeSession(session));
 });
 
 router.get('/sessions/:id', (req, res) => {
   const session = sessions.get(req.params.id.toUpperCase());
   if (!session) return res.status(404).json({ error: 'Session not found.' });
-  res.json(session);
+  res.json(sanitizeSession(session));
+});
+
+// --- PIN Verification ---
+
+router.post('/sessions/:id/verify-pin', (req, res) => {
+  const session = sessions.get(req.params.id.toUpperCase());
+  if (!session) return res.status(404).json({ error: 'Session not found.' });
+
+  if (!session.pin) return res.json({ ok: true });
+
+  const { pin } = req.body;
+  if (String(pin) !== session.pin) {
+    return res.status(401).json({ error: 'Incorrect PIN.' });
+  }
+
+  res.json({ ok: true });
+});
+
+// --- Undo ---
+
+router.post('/sessions/:id/undo', (req, res) => {
+  const session = sessions.get(req.params.id.toUpperCase());
+  if (!session) return res.status(404).json({ error: 'Session not found.' });
+
+  if (session.actionStack.length === 0) {
+    return res.status(400).json({ error: 'Nothing to undo.' });
+  }
+
+  session.donors = session.actionStack.pop();
+  res.json(sanitizeSession(session));
 });
 
 // --- Donors ---
@@ -94,6 +151,8 @@ router.post('/sessions/:id/donors', (req, res) => {
     return res.status(400).json({ error: 'Amount must be a positive number.' });
   }
 
+  pushSnapshot(session);
+
   const donor = {
     id: uuidv4(),
     firstName: firstName.trim(),
@@ -105,7 +164,7 @@ router.post('/sessions/:id/donors', (req, res) => {
   };
 
   session.donors.push(donor);
-  return res.status(201).json(session);
+  return res.status(201).json(sanitizeSession(session));
 });
 
 router.put('/sessions/:id/donors/:donorId', (req, res) => {
@@ -122,13 +181,15 @@ router.put('/sessions/:id/donors/:donorId', (req, res) => {
     return res.status(400).json({ error: 'Amount must be a positive number.' });
   }
 
+  pushSnapshot(session);
+
   donor.firstName = firstName.trim();
   donor.lastName = lastName.trim();
   donor.amount = parsedAmount;
   donor.isAnonymous = Boolean(isAnonymous);
   donor.displayName = computeDisplayName(firstName, lastName, isAnonymous);
 
-  res.json(session);
+  res.json(sanitizeSession(session));
 });
 
 router.delete('/sessions/:id/donors/:donorId', (req, res) => {
@@ -138,8 +199,10 @@ router.delete('/sessions/:id/donors/:donorId', (req, res) => {
   const index = session.donors.findIndex(d => d.id === req.params.donorId);
   if (index === -1) return res.status(404).json({ error: 'Donor not found.' });
 
+  pushSnapshot(session);
+
   session.donors.splice(index, 1);
-  res.json(session);
+  res.json(sanitizeSession(session));
 });
 
 // --- Goal ---
@@ -160,7 +223,7 @@ router.put('/sessions/:id/goal', (req, res) => {
     session.goal = parsed;
   }
 
-  res.json(session);
+  res.json(sanitizeSession(session));
 });
 
 // --- Iframe ---
@@ -194,7 +257,7 @@ router.put('/sessions/:id/iframe', (req, res) => {
 
   session.iframePosition = (iframePosition === 'left') ? 'left' : 'right';
 
-  res.json(session);
+  res.json(sanitizeSession(session));
 });
 
 // --- Title ---
@@ -207,7 +270,7 @@ router.put('/sessions/:id/title', (req, res) => {
   const trimmed = typeof title === 'string' ? title.trim() : '';
   session.title = trimmed || null;
 
-  res.json(session);
+  res.json(sanitizeSession(session));
 });
 
 // --- Display Mode ---
@@ -222,7 +285,7 @@ router.put('/sessions/:id/display-mode', (req, res) => {
   }
 
   session.displayMode = displayMode;
-  res.json(session);
+  res.json(sanitizeSession(session));
 });
 
 // --- Summary Messages ---
@@ -236,7 +299,7 @@ router.put('/sessions/:id/summary-messages', (req, res) => {
   session.targetReachedMessage = (typeof targetReachedMessage === 'string' && targetReachedMessage.trim()) ? targetReachedMessage.trim() : null;
   session.targetRemainingMessage = (typeof targetRemainingMessage === 'string' && targetRemainingMessage.trim()) ? targetRemainingMessage.trim() : null;
 
-  res.json(session);
+  res.json(sanitizeSession(session));
 });
 
 // --- Ticker ---
@@ -249,7 +312,7 @@ router.put('/sessions/:id/ticker', (req, res) => {
   const trimmed = typeof tickerMessage === 'string' ? tickerMessage.trim() : '';
   session.tickerMessage = trimmed || null;
 
-  res.json(session);
+  res.json(sanitizeSession(session));
 });
 
 // --- Theme ---
@@ -264,7 +327,48 @@ router.put('/sessions/:id/theme', (req, res) => {
   }
 
   session.theme = theme;
-  res.json(session);
+  res.json(sanitizeSession(session));
+});
+
+// --- Milestones ---
+
+router.put('/sessions/:id/milestones', (req, res) => {
+  const session = sessions.get(req.params.id.toUpperCase());
+  if (!session) return res.status(404).json({ error: 'Session not found.' });
+
+  const { milestonesEnabled } = req.body;
+  session.milestonesEnabled = Boolean(milestonesEnabled);
+
+  res.json(sanitizeSession(session));
+});
+
+// --- QR Code ---
+
+router.put('/sessions/:id/qr', (req, res) => {
+  const session = sessions.get(req.params.id.toUpperCase());
+  if (!session) return res.status(404).json({ error: 'Session not found.' });
+
+  const { qrUrl, qrEnabled } = req.body;
+
+  if (!qrUrl) {
+    session.qrUrl = null;
+    session.qrEnabled = false;
+    return res.json(sanitizeSession(session));
+  }
+
+  try {
+    const parsed = new URL(qrUrl);
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+      return res.status(400).json({ error: 'qrUrl must be an http or https URL.' });
+    }
+  } catch {
+    return res.status(400).json({ error: 'qrUrl is not a valid URL.' });
+  }
+
+  session.qrUrl = qrUrl;
+  session.qrEnabled = Boolean(qrEnabled);
+
+  res.json(sanitizeSession(session));
 });
 
 // --- CSV Export ---
@@ -300,6 +404,8 @@ router.post('/sessions/:id/import', upload.single('file'), (req, res) => {
   // Skip header row
   const dataLines = lines.slice(1);
 
+  pushSnapshot(session);
+
   for (const line of dataLines) {
     // Simple CSV parse: split on comma, strip surrounding quotes
     const cols = line.split(',').map(c => c.trim().replace(/^"|"$/g, '').replace(/""/g, '"'));
@@ -321,7 +427,7 @@ router.post('/sessions/:id/import', upload.single('file'), (req, res) => {
     });
   }
 
-  res.json(session);
+  res.json(sanitizeSession(session));
 });
 
 module.exports = router;
