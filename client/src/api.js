@@ -49,11 +49,43 @@ export function setGoal(sessionId, goal) {
   });
 }
 
-export function setIframe(sessionId, { iframeUrl, iframeMode }) {
+export function setIframe(sessionId, { iframeUrl, iframeMode, iframePosition }) {
   return request(`/sessions/${sessionId}/iframe`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ iframeUrl, iframeMode }),
+    body: JSON.stringify({ iframeUrl, iframeMode, iframePosition }),
+  });
+}
+
+export function setTitle(sessionId, title) {
+  return request(`/sessions/${sessionId}/title`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title }),
+  });
+}
+
+export function setDisplayMode(sessionId, displayMode) {
+  return request(`/sessions/${sessionId}/display-mode`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ displayMode }),
+  });
+}
+
+export function setSummaryMessages(sessionId, { thankYouMessage, targetReachedMessage, targetRemainingMessage }) {
+  return request(`/sessions/${sessionId}/summary-messages`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ thankYouMessage, targetReachedMessage, targetRemainingMessage }),
+  });
+}
+
+export function setTicker(sessionId, tickerMessage) {
+  return request(`/sessions/${sessionId}/ticker`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ tickerMessage }),
   });
 }
 

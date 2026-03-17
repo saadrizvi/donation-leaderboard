@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react'
 import { usePolling } from '../hooks/usePolling.js'
-import { addDonor, editDonor, deleteDonor, setGoal, setIframe, setTheme, exportCSV, importCSV } from '../api.js'
+import {
+  addDonor, editDonor, deleteDonor,
+  setGoal, setIframe, setTheme, exportCSV, importCSV,
+  setTitle, setDisplayMode, setTicker, setSummaryMessages,
+} from '../api.js'
 import SessionEntry from '../components/SessionEntry.jsx'
 import DonorForm from '../components/DonorForm.jsx'
 import DonorList from '../components/DonorList.jsx'
@@ -9,6 +13,19 @@ import StatusIndicator from '../components/StatusIndicator.jsx'
 import '../styles/admin.css'
 
 const LS_KEY = 'donor_board_admin_session'
+
+function Section({ name, title, children, collapsedSections, toggleSection }) {
+  const collapsed = collapsedSections[name]
+  return (
+    <div className={`admin-section${collapsed ? ' collapsed' : ''}`}>
+      <button className="section-toggle" onClick={() => toggleSection(name)}>
+        <span>{title}</span>
+        <span className="chevron">{collapsed ? '▸' : '▾'}</span>
+      </button>
+      {!collapsed && <div className="section-body">{children}</div>}
+    </div>
+  )
+}
 
 function formatAmount(amount) {
   return amount.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
@@ -29,20 +46,44 @@ function Admin() {
   const [goalInput, setGoalInput] = useState('')
   const [goalMsg, setGoalMsg] = useState('')
 
+  // Title
+  const [titleInput, setTitleInput] = useState('')
+  const [titleMsg, setTitleMsg] = useState('')
+
   // Iframe
   const [iframeUrl, setIframeUrl] = useState('')
   const [iframeMode, setIframeMode] = useState('split')
+  const [iframePosition, setIframePosition] = useState('right')
   const [iframeMsg, setIframeMsg] = useState('')
+
+  // Summary messages
+  const [thankYouInput, setThankYouInput] = useState('Thank you for your generosity!')
+  const [targetReachedInput, setTargetReachedInput] = useState('Target Reached! Alhumdulillah, {over} over target')
+  const [targetRemainingInput, setTargetRemainingInput] = useState('{remaining} left to reach target')
+  const [summaryMsgFeedback, setSummaryMsgFeedback] = useState('')
+
+  // Ticker
+  const [tickerInput, setTickerInput] = useState('')
+  const [tickerMsg, setTickerMsg] = useState('')
 
   // CSV
   const [csvFile, setCsvFile] = useState(null)
   const [csvMsg, setCsvMsg] = useState(null)
 
-  // Sync iframe inputs when session first loads
+  // Collapsible sections
+  const [collapsedSections, setCollapsedSections] = useState({})
+
+  // Sync inputs when session first loads
   useEffect(() => {
     if (session) {
       setIframeUrl(session.iframeUrl || '')
       setIframeMode(session.iframeMode || 'split')
+      setIframePosition(session.iframePosition || 'right')
+      setTitleInput(session.title || '')
+      setTickerInput(session.tickerMessage || '')
+      setThankYouInput(session.thankYouMessage || 'Thank you for your generosity!')
+      setTargetReachedInput(session.targetReachedMessage || 'Target Reached! Alhumdulillah, {over} over target')
+      setTargetRemainingInput(session.targetRemainingMessage || '{remaining} left to reach target')
     }
   }, [session?.id])
 
@@ -58,6 +99,10 @@ function Admin() {
 
   function handleCopyId() {
     navigator.clipboard.writeText(sessionId).catch(() => {})
+  }
+
+  function toggleSection(name) {
+    setCollapsedSections(prev => ({ ...prev, [name]: !prev[name] }))
   }
 
   // --- Donor add with duplicate detection ---
@@ -128,16 +173,78 @@ function Admin() {
     }
   }
 
+  // --- Title ---
+  async function handleSetTitle() {
+    try {
+      await setTitle(sessionId, titleInput)
+      setTitleMsg('Saved.')
+      await refresh()
+    } catch (err) {
+      setTitleMsg(err.message)
+    }
+  }
+
+  // --- Display Mode ---
+  async function handleSetDisplayMode(mode) {
+    try {
+      await setDisplayMode(sessionId, mode)
+      await refresh()
+    } catch (err) {
+      // silently ignore
+    }
+  }
+
   // --- Theme ---
   async function handleSetTheme(value) {
     await setTheme(sessionId, value)
     await refresh()
   }
 
+  // --- Ticker ---
+  async function handleSaveTicker() {
+    try {
+      await setTicker(sessionId, tickerInput)
+      setTickerMsg('Saved.')
+      await refresh()
+    } catch (err) {
+      setTickerMsg(err.message)
+    }
+  }
+
+  async function handleClearTicker() {
+    try {
+      await setTicker(sessionId, null)
+      setTickerInput('')
+      setTickerMsg('Removed.')
+      await refresh()
+    } catch (err) {
+      setTickerMsg(err.message)
+    }
+  }
+
+  // --- Summary Messages ---
+  async function handleSaveSummaryMessages() {
+    try {
+      await setSummaryMessages(sessionId, {
+        thankYouMessage: thankYouInput,
+        targetReachedMessage: targetReachedInput,
+        targetRemainingMessage: targetRemainingInput,
+      })
+      setSummaryMsgFeedback('Saved.')
+      await refresh()
+    } catch (err) {
+      setSummaryMsgFeedback(err.message)
+    }
+  }
+
   // --- Iframe ---
   async function handleSaveIframe() {
     try {
-      await setIframe(sessionId, { iframeUrl: iframeUrl || null, iframeMode: iframeUrl ? iframeMode : null })
+      await setIframe(sessionId, {
+        iframeUrl: iframeUrl || null,
+        iframeMode: iframeUrl ? iframeMode : null,
+        iframePosition,
+      })
       setIframeMsg('Saved.')
       await refresh()
     } catch (err) {
@@ -147,7 +254,7 @@ function Admin() {
 
   async function handleRemoveIframe() {
     try {
-      await setIframe(sessionId, { iframeUrl: null, iframeMode: null })
+      await setIframe(sessionId, { iframeUrl: null, iframeMode: null, iframePosition })
       setIframeUrl('')
       setIframeMode('split')
       setIframeMsg('')
@@ -241,11 +348,44 @@ function Admin() {
             <div style={{ fontSize: '0.8rem', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>Goal</div>
           </div>
         )}
+        {session.goal && (
+          <div style={{ flex: 1, background: total >= session.goal ? '#edf7f0' : '#fff7ed', borderRadius: '8px', padding: '12px', textAlign: 'center' }}>
+            {total >= session.goal ? (
+              <>
+                <div style={{ fontSize: '1.4rem', fontWeight: 700, color: '#1b5e38' }}>Goal Met! ✓</div>
+                <div style={{ fontSize: '0.8rem', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>{formatAmount(total - session.goal)} over</div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: '1.6rem', fontWeight: 700, color: '#b07a10' }}>{formatAmount(session.goal - total)}</div>
+                <div style={{ fontSize: '0.8rem', color: '#888', textTransform: 'uppercase', letterSpacing: '1px' }}>Remaining</div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
+      {/* Display Mode */}
+      <Section collapsedSections={collapsedSections} toggleSection={toggleSection} name="displayMode" title="Display Mode">
+        <div className="display-mode-toggle">
+          <button
+            className={`btn mode-btn${(session?.displayMode ?? 'live') !== 'summary' ? ' active' : ''}`}
+            onClick={() => handleSetDisplayMode('live')}
+          >
+            📺 Live Donations
+          </button>
+          <button
+            className={`btn mode-btn${session?.displayMode === 'summary' ? ' active' : ''}`}
+            onClick={() => handleSetDisplayMode('summary')}
+          >
+            🏆 Summary
+          </button>
+        </div>
+        <p className="helper-text">Controls what the Display screen shows to donors.</p>
+      </Section>
+
       {/* Add / Edit donor */}
-      <div className="admin-section">
-        <h2>{editingDonor ? 'Edit Donor' : 'Add Donor'}</h2>
+      <Section collapsedSections={collapsedSections} toggleSection={toggleSection} name="addDonor" title={editingDonor ? 'Edit Donor' : 'Add Donor'}>
         <DonorForm
           onSubmit={editingDonor ? handleEditSubmit : handleAddDonor}
           loading={false}
@@ -256,21 +396,19 @@ function Admin() {
             isAnonymous: editingDonor.isAnonymous,
           } : null}
         />
-      </div>
+      </Section>
 
       {/* Donor list */}
-      <div className="admin-section">
-        <h2>Donors ({session.donors.length})</h2>
+      <Section collapsedSections={collapsedSections} toggleSection={toggleSection} name="donors" title={`Donors (${session.donors.length})`}>
         <DonorList
           donors={session.donors}
           onEdit={donor => setEditingDonor(donor)}
           onDelete={handleDelete}
         />
-      </div>
+      </Section>
 
       {/* Goal */}
-      <div className="admin-section">
-        <h2>Fundraising Target</h2>
+      <Section collapsedSections={collapsedSections} toggleSection={toggleSection} name="goal" title="Fundraising Target">
         {session.goal && (
           <div className="goal-display">
             <span>Current goal:</span>
@@ -298,11 +436,81 @@ function Admin() {
           </button>
         </div>
         {goalMsg && <p className="form-error">{goalMsg}</p>}
-      </div>
+      </Section>
+
+      {/* CSV */}
+      <Section collapsedSections={collapsedSections} toggleSection={toggleSection} name="csv" title="CSV Import / Export">
+        <div className="csv-row" style={{ marginBottom: '10px' }}>
+          <button className="btn btn-secondary btn-sm" onClick={handleExport}>Export CSV</button>
+        </div>
+        <div className="csv-row">
+          <input
+            type="file"
+            accept=".csv"
+            onChange={e => { setCsvFile(e.target.files[0] || null); setCsvMsg(null) }}
+            style={{ flex: 1, fontSize: '0.9rem' }}
+          />
+          <button className="btn btn-primary btn-sm" onClick={handleImport} disabled={!csvFile}>
+            Import CSV
+          </button>
+        </div>
+        {csvMsg && (
+          <div className={`status-message ${csvMsg.type}`}>{csvMsg.text}</div>
+        )}
+      </Section>
+
+      {/* Organization Title */}
+      <Section collapsedSections={collapsedSections} toggleSection={toggleSection} name="title" title="Organization Title">
+        <input
+          className="input"
+          type="text"
+          placeholder="e.g. Masjid Al-Noor Fundraiser"
+          value={titleInput}
+          onChange={e => setTitleInput(e.target.value)}
+          maxLength={80}
+        />
+        <button className="btn btn-primary" onClick={handleSetTitle}>Save Title</button>
+        {titleMsg && <p className="form-msg">{titleMsg}</p>}
+      </Section>
+
+      {/* Summary Messages */}
+      <Section collapsedSections={collapsedSections} toggleSection={toggleSection} name="summaryMessages" title="Summary Messages">
+        <div className="form-group">
+          <label>Thank You Message</label>
+          <input
+            className="input"
+            type="text"
+            value={thankYouInput}
+            onChange={e => setThankYouInput(e.target.value)}
+            maxLength={120}
+          />
+        </div>
+        <div className="form-group">
+          <label>Target Reached Message <span className="helper-text" style={{ textTransform: 'none', letterSpacing: 0 }}>(use <code>&#123;over&#125;</code> for the amount over goal)</span></label>
+          <input
+            className="input"
+            type="text"
+            value={targetReachedInput}
+            onChange={e => setTargetReachedInput(e.target.value)}
+            maxLength={160}
+          />
+        </div>
+        <div className="form-group">
+          <label>Target Remaining Message <span className="helper-text" style={{ textTransform: 'none', letterSpacing: 0 }}>(use <code>&#123;remaining&#125;</code> for the amount remaining)</span></label>
+          <input
+            className="input"
+            type="text"
+            value={targetRemainingInput}
+            onChange={e => setTargetRemainingInput(e.target.value)}
+            maxLength={160}
+          />
+        </div>
+        <button className="btn btn-primary" onClick={handleSaveSummaryMessages}>Save Messages</button>
+        {summaryMsgFeedback && <p className="form-msg">{summaryMsgFeedback}</p>}
+      </Section>
 
       {/* Display theme */}
-      <div className="admin-section">
-        <h2>Display Theme</h2>
+      <Section collapsedSections={collapsedSections} toggleSection={toggleSection} name="theme" title="Display Theme">
         <div className="mode-options">
           <div
             className={`mode-option${(session.theme || 'dark') === 'dark' ? ' selected' : ''}`}
@@ -321,18 +529,35 @@ function Admin() {
             <div style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: '2px' }}>Cream + Green</div>
           </div>
         </div>
-      </div>
+      </Section>
+
+      {/* Ticker Message */}
+      <Section collapsedSections={collapsedSections} toggleSection={toggleSection} name="ticker" title="Ticker Message">
+        <textarea
+          className="input"
+          rows={2}
+          placeholder="e.g. JazakAllah Khair'un for your generous donations..."
+          value={tickerInput}
+          onChange={e => setTickerInput(e.target.value)}
+          maxLength={300}
+        />
+        <div className="btn-row">
+          <button className="btn btn-primary" onClick={handleSaveTicker}>Save Ticker</button>
+          {session?.tickerMessage && (
+            <button className="btn btn-ghost" onClick={handleClearTicker}>Remove</button>
+          )}
+        </div>
+        {tickerMsg && <p className="form-msg">{tickerMsg}</p>}
+      </Section>
 
       {/* Iframe config */}
-      <div className="admin-section">
-        <h2>Embed URL</h2>
+      <Section collapsedSections={collapsedSections} toggleSection={toggleSection} name="embed" title="Embed Content (iframe)">
         <div className="form-group" style={{ marginBottom: '10px' }}>
           <label>URL or &lt;iframe&gt; embed code</label>
           <textarea
             value={iframeUrl}
             onChange={e => {
               const val = e.target.value
-              // If it looks like an iframe snippet, extract the src
               const match = val.match(/src=["']([^"']+)["']/)
               setIframeUrl(match ? match[1] : val)
             }}
@@ -366,6 +591,27 @@ function Admin() {
             </div>
           </div>
         </div>
+        {iframeMode === 'split' && (
+          <div className="form-group" style={{ marginBottom: '10px' }}>
+            <label>Iframe Position</label>
+            <div className="mode-options">
+              <div
+                className={`mode-option${iframePosition === 'left' ? ' selected' : ''}`}
+                onClick={() => setIframePosition('left')}
+              >
+                <div style={{ fontSize: '1.2rem' }}>◧</div>
+                <div style={{ fontSize: '0.85rem', marginTop: '2px' }}>Iframe Left</div>
+              </div>
+              <div
+                className={`mode-option${iframePosition === 'right' ? ' selected' : ''}`}
+                onClick={() => setIframePosition('right')}
+              >
+                <div style={{ fontSize: '1.2rem' }}>◨</div>
+                <div style={{ fontSize: '0.85rem', marginTop: '2px' }}>Iframe Right</div>
+              </div>
+            </div>
+          </div>
+        )}
         <p className="helper-note">Split screen works best on wide TV displays. Rotating page works on any screen.</p>
         {iframeMode === 'split' && (
           <p className="helper-note" style={{ color: 'var(--color-warning)' }}>
@@ -379,29 +625,7 @@ function Admin() {
           )}
         </div>
         {iframeMsg && <p style={{ fontSize: '0.85rem', color: '#00a87a', marginTop: '6px' }}>{iframeMsg}</p>}
-      </div>
-
-      {/* CSV */}
-      <div className="admin-section">
-        <h2>CSV</h2>
-        <div className="csv-row" style={{ marginBottom: '10px' }}>
-          <button className="btn btn-secondary btn-sm" onClick={handleExport}>Export CSV</button>
-        </div>
-        <div className="csv-row">
-          <input
-            type="file"
-            accept=".csv"
-            onChange={e => { setCsvFile(e.target.files[0] || null); setCsvMsg(null) }}
-            style={{ flex: 1, fontSize: '0.9rem' }}
-          />
-          <button className="btn btn-primary btn-sm" onClick={handleImport} disabled={!csvFile}>
-            Import CSV
-          </button>
-        </div>
-        {csvMsg && (
-          <div className={`status-message ${csvMsg.type}`}>{csvMsg.text}</div>
-        )}
-      </div>
+      </Section>
 
       {/* Duplicate modal */}
       {duplicateMatch && (

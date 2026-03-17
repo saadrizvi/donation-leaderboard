@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useParams } from 'react-router-dom'
 import { getSession } from '../api.js'
 import GoalProgress from '../components/GoalProgress.jsx'
+import TickerBar from '../components/TickerBar.jsx'
 import '../styles/display.css'
 import '../styles/summary.css'
 
@@ -46,6 +47,9 @@ function Summary() {
 
   return (
     <div className="summary-page" data-theme={session.theme || 'dark'}>
+      {session.title && (
+        <h1 className="summary-org-title">{session.title}</h1>
+      )}
       <div className="summary-header">
         <h1>JazakAllahu Khayran 🤲</h1>
         <div className="summary-subtitle">May Allah accept your generous contributions</div>
@@ -97,6 +101,8 @@ function Summary() {
           <GoalProgress current={total} goal={session.goal} />
         </div>
       )}
+
+      <TickerBar message={session?.tickerMessage} />
     </div>
   )
 }

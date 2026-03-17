@@ -59,7 +59,14 @@ router.post('/sessions', (req, res) => {
     goal: null,
     iframeUrl: null,
     iframeMode: null,
+    iframePosition: 'right',
     theme: 'dark',
+    title: null,
+    displayMode: 'live',
+    tickerMessage: null,
+    thankYouMessage: null,
+    targetReachedMessage: null,
+    targetRemainingMessage: null,
     createdAt: new Date().toISOString(),
     donors: [],
   };
@@ -162,7 +169,7 @@ router.put('/sessions/:id/iframe', (req, res) => {
   const session = sessions.get(req.params.id.toUpperCase());
   if (!session) return res.status(404).json({ error: 'Session not found.' });
 
-  const { iframeUrl, iframeMode } = req.body;
+  const { iframeUrl, iframeMode, iframePosition } = req.body;
 
   if (iframeUrl === null || iframeUrl === undefined || iframeUrl === '') {
     session.iframeUrl = null;
@@ -184,6 +191,63 @@ router.put('/sessions/:id/iframe', (req, res) => {
     session.iframeUrl = iframeUrl;
     session.iframeMode = iframeMode;
   }
+
+  session.iframePosition = (iframePosition === 'left') ? 'left' : 'right';
+
+  res.json(session);
+});
+
+// --- Title ---
+
+router.put('/sessions/:id/title', (req, res) => {
+  const session = sessions.get(req.params.id.toUpperCase());
+  if (!session) return res.status(404).json({ error: 'Session not found.' });
+
+  const { title } = req.body;
+  const trimmed = typeof title === 'string' ? title.trim() : '';
+  session.title = trimmed || null;
+
+  res.json(session);
+});
+
+// --- Display Mode ---
+
+router.put('/sessions/:id/display-mode', (req, res) => {
+  const session = sessions.get(req.params.id.toUpperCase());
+  if (!session) return res.status(404).json({ error: 'Session not found.' });
+
+  const { displayMode } = req.body;
+  if (displayMode !== 'live' && displayMode !== 'summary') {
+    return res.status(400).json({ error: 'displayMode must be "live" or "summary".' });
+  }
+
+  session.displayMode = displayMode;
+  res.json(session);
+});
+
+// --- Summary Messages ---
+
+router.put('/sessions/:id/summary-messages', (req, res) => {
+  const session = sessions.get(req.params.id.toUpperCase());
+  if (!session) return res.status(404).json({ error: 'Session not found.' });
+
+  const { thankYouMessage, targetReachedMessage, targetRemainingMessage } = req.body;
+  session.thankYouMessage = (typeof thankYouMessage === 'string' && thankYouMessage.trim()) ? thankYouMessage.trim() : null;
+  session.targetReachedMessage = (typeof targetReachedMessage === 'string' && targetReachedMessage.trim()) ? targetReachedMessage.trim() : null;
+  session.targetRemainingMessage = (typeof targetRemainingMessage === 'string' && targetRemainingMessage.trim()) ? targetRemainingMessage.trim() : null;
+
+  res.json(session);
+});
+
+// --- Ticker ---
+
+router.put('/sessions/:id/ticker', (req, res) => {
+  const session = sessions.get(req.params.id.toUpperCase());
+  if (!session) return res.status(404).json({ error: 'Session not found.' });
+
+  const { tickerMessage } = req.body;
+  const trimmed = typeof tickerMessage === 'string' ? tickerMessage.trim() : '';
+  session.tickerMessage = trimmed || null;
 
   res.json(session);
 });

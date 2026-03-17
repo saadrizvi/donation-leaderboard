@@ -5,7 +5,9 @@
       "Bash(npm create:*)",
       "Bash(npm install:*)",
       "Bash(netstat -ano)",
-      "Bash(npm run:*)"
+      "Bash(npm run:*)",
+      "Bash(find:*)",
+      "Bash(node:*)"
     ]
   }
 }

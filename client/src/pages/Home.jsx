@@ -3,9 +3,9 @@ import { Link } from 'react-router-dom'
 function Home() {
   return (
     <main>
-      <h1>Donor Board</h1>
+      <h1>Donor Board - Main </h1>
       <nav>
-        <Link to="/admin">Admin</Link>
+        <Link to="/admin">Admin</Link> <br></br>
         <Link to="/display">Display</Link>
       </nav>
     </main>

@@ -75,12 +75,9 @@
   min-height: 36px;
 }
 
-/* Section cards */
+/* Section cards — base rule; collapsible overrides below */
 .admin-section {
-  background: #f9f9fc;
-  border: 1px solid #e5e5ef;
   border-radius: var(--radius);
-  padding: var(--spacing-md);
   margin-bottom: var(--spacing-md);
 }
 
@@ -379,4 +376,114 @@
 .admin-page .status-indicator span {
   color: #666;
   font-size: 0.75rem;
+}
+
+/* Collapsible sections */
+.admin-section {
+  border: 1px solid #e0e0ea;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.section-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.85rem 1.1rem;
+  background: #eeeef6;
+  border: none;
+  border-bottom: 1px solid #e0e0ea;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: #444;
+  text-align: left;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.section-toggle:hover {
+  background: #e5e5f0;
+}
+
+.section-toggle .chevron {
+  font-size: 0.75rem;
+  opacity: 0.6;
+  transition: transform 0.2s;
+}
+
+.section-body {
+  padding: 1rem 1.1rem;
+  background: #f9f9fc;
+}
+
+.admin-section.collapsed .section-body {
+  display: none;
+}
+
+/* Display mode toggle */
+.display-mode-toggle {
+  display: flex;
+  gap: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.mode-btn {
+  flex: 1;
+  padding: 0.65rem 1rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  border: 2px solid #ddd;
+  background: #f0f0f7;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #555;
+}
+
+.mode-btn.active {
+  border-color: #c9a84c;
+  background: #fffbf0;
+  color: #1a1a2e;
+}
+
+/* Button row utility */
+.btn-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* Input utility class for section inputs */
+.input {
+  padding: 10px 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  font-size: 1rem;
+  width: 100%;
+  background: #fff;
+  box-sizing: border-box;
+  margin-bottom: 0.5rem;
+  font-family: inherit;
+}
+
+.input:focus {
+  outline: 2px solid var(--color-accent);
+  border-color: transparent;
+}
+
+/* Form message (success/error in sections) */
+.form-msg {
+  font-size: 0.85rem;
+  color: #00a87a;
+  margin-top: 4px;
+}
+
+/* Helper text in sections */
+.helper-text {
+  font-size: 0.8rem;
+  color: #888;
+  margin-top: 4px;
 }
